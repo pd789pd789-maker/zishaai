@@ -1,111 +1,46 @@
-import { Link, useNavigate } from "react-router-dom";
-import { useState, FormEvent, useEffect } from "react";
-import { ArrowRight, Loader2, Mail, Lock, Phone, MessageSquare, KeyRound } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
-import { auth, db } from "../lib/firebase";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { Link } from "react-router-dom";
+import { useState, FormEvent } from "react";
+import { ArrowRight, KeyRound } from "lucide-react";
+import { motion } from "framer-motion";
+import { signInAnonymously } from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-
-declare global {
-  interface Window { recaptchaVerifier: any; }
-}
+import { auth, db } from "../lib/firebase";
 
 export default function Login() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
-  const [isRegister, setIsRegister] = useState(false);
-  const [isPhoneAuth, setIsPhoneAuth] = useState(false);
   const [betaCode, setBetaCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    // Check if beta mode was activated via localStorage
-    if (localStorage.getItem('beta_access') === 'true') {
-      localStorage.removeItem('beta_access');
-      window.location.href = '/app';
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-        'callback': () => {}
-      });
-    }
-  }, []);
-
-  const handleAuth = async (e: FormEvent) => {
+  const handleBetaLogin = async (e: FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      if (isPhoneAuth) {
-        if (confirmationResult) {
-          const result = await confirmationResult.confirm(code);
-          await ensureUserProfile(result.user.uid, result.user.phoneNumber || '');
-          toast.success("登录成功！");
-          navigate('/app');
-        } else {
-          const appVerifier = window.recaptchaVerifier;
-          const formattedPhone = phone.startsWith('+') ? phone : `+86${phone}`;
-          const result = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-          setConfirmationResult(result);
-          toast.success("验证码已发送至您的手机");
-        }
-      } else {
-        if (isRegister) {
-          const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-          await ensureUserProfile(userCredential.user.uid, email);
-          toast.success("注册成功！");
-        } else {
-          await signInWithEmailAndPassword(auth, email, password);
-          toast.success("登录成功！");
-        }
-        navigate('/app');
-      }
-    } catch (err: any) {
-      toast.error(err.message || "操作失败，请重试");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleBetaLogin = (e: FormEvent) => {
-    e.preventDefault();
-    if (betaCode === "888888") {
-      localStorage.setItem('beta_access', 'true');
-      toast.success("正在进入工作台...");
-      window.location.href = '/app';
-    } else {
+    if (betaCode !== "888888") {
       toast.error("内测码错误");
+      return;
     }
-  };
+    try {
+      // Sign in anonymously so Firebase Auth has a valid user
+      const result = await signInAnonymously(auth);
 
-  const ensureUserProfile = async (uid: string, identifier: string) => {
-    const userRef = doc(db, 'users', uid);
-    const snap = await getDoc(userRef);
-    if (!snap.exists()) {
+      // Create user profile
+      const userRef = doc(db, 'users', result.user.uid);
       await setDoc(userRef, {
-        uid,
-        email: identifier.includes('@') ? identifier : null,
-        phoneNumber: identifier.includes('@') ? null : identifier,
-        points: 100,
+        uid: result.user.uid,
+        email: null,
+        phoneNumber: null,
+        points: 99999,
         role: 'user',
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
-      });
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      toast.success("正在进入工作台...");
+      window.location.href = '/app';
+    } catch (err: any) {
+      toast.error(err.message || "登录失败");
     }
   };
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white flex flex-col font-sans relative overflow-hidden">
-      <div id="recaptcha-container"></div>
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-[#C8855F]/20 blur-[120px] rounded-full pointer-events-none translate-x-1/3 -translate-y-1/3"></div>
       <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-white/5 blur-[100px] rounded-full pointer-events-none -translate-x-1/3 translate-y-1/3"></div>
 
