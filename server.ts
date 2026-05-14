@@ -15,13 +15,11 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception thrown:', err);
 });
 
-// CJS production build: __dirname and __filename are provided by Node.js at runtime
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _dirname = __dirname;
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _filename = __filename;
-void _dirname;
-void _filename;
+import { fileURLToPath } from "url";
+import path from "path";
+
+// CJS production: __dirname and __filename are provided by Node.js
+// We reference them to prevent the warning but don't use them directly
 
 // Initialize Firebase Admin globally so it doesn't crash on startup if missing.
 // This is typically provided via service account json
