@@ -2,41 +2,23 @@ import { Link } from "react-router-dom";
 import { useState, FormEvent } from "react";
 import { ArrowRight, KeyRound } from "lucide-react";
 import { motion } from "framer-motion";
-import { signInAnonymously } from "firebase/auth";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { toast } from "sonner";
-import { auth, db } from "../lib/firebase";
 
 export default function Login() {
   const [betaCode, setBetaCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleBetaLogin = async (e: FormEvent) => {
+  const handleBetaLogin = (e: FormEvent) => {
     e.preventDefault();
     if (betaCode !== "888888") {
       toast.error("内测码错误");
       return;
     }
-    try {
-      // Sign in anonymously so Firebase Auth has a valid user
-      const result = await signInAnonymously(auth);
-
-      // Create user profile
-      const userRef = doc(db, 'users', result.user.uid);
-      await setDoc(userRef, {
-        uid: result.user.uid,
-        email: null,
-        phoneNumber: null,
-        points: 99999,
-        role: 'user',
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-
-      toast.success("正在进入工作台...");
-      window.location.href = '/app';
-    } catch (err: any) {
-      toast.error(err.message || "登录失败");
-    }
+    setLoading(true);
+    localStorage.setItem("beta_token", "active");
+    localStorage.setItem("beta_uid", "beta-" + Date.now());
+    toast.success("正在进入工作台...");
+    window.location.href = "/app";
   };
 
   return (
@@ -79,10 +61,11 @@ export default function Login() {
             </div>
             <button
               type="submit"
-              className="w-full bg-[#C8855F] text-black font-bold py-3.5 rounded-xl hover:bg-[#B5754F] transition-colors flex items-center justify-center gap-2 group"
+              disabled={loading}
+              className="w-full bg-[#C8855F] text-black font-bold py-3.5 rounded-xl hover:bg-[#B5754F] transition-colors flex items-center justify-center gap-2 group disabled:opacity-50"
             >
-              进入工作台
-              <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              {loading ? "进入中..." : "进入工作台"}
+              {!loading && <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />}
             </button>
           </form>
         </motion.div>

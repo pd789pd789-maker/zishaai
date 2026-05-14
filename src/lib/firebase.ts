@@ -6,6 +6,6 @@ import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+export const db = getFirestore(app);
 // The applet config might not contain a storageBucket. Let's make sure things fallback gracefully.
 export const storage = getStorage(app);

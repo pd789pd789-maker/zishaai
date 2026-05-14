@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, db } from './firebase';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 
 interface UserProfile {
   uid: string;
@@ -17,6 +17,7 @@ interface AuthContextType {
   loading: boolean;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  isBeta: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -25,43 +26,58 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   logout: async () => {},
   refreshProfile: async () => {},
+  isBeta: false,
 });
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isBeta, setIsBeta] = useState(false);
 
   const fetchProfile = async (uid: string) => {
     try {
       const docRef = doc(db, 'users', uid);
-      const docSnap = await getDoc(docRef);
+      const docSnap = await docRef.get();
       if (docSnap.exists()) {
         setProfile(docSnap.data() as UserProfile);
       } else {
-        // Create an initial profile for new users since onAuthStateChanged is the first that spots them
         const newProfile: UserProfile = {
           uid,
           role: 'user',
-          phone: auth.currentUser?.phoneNumber || null,
-          email: auth.currentUser?.email || null,
-          points: 50, // 50 points on signup as requested before
+          phone: null,
+          email: null,
+          points: 50,
           createdAt: new Date().toISOString() as any,
           updatedAt: new Date().toISOString() as any,
         } as any;
-        
-        // Let's use server auth for creating if user doesn't have privileges, but based on our rules,
-        // user can create their own profile if it's strictly user role with proper fields.
         await setDoc(docRef, newProfile);
         setProfile(newProfile);
       }
     } catch (e) {
       console.error(e);
-      // Wait for it or fail gracefully
     }
   };
 
   useEffect(() => {
+    // Check beta token first
+    const betaToken = localStorage.getItem('beta_token');
+    if (betaToken === 'active') {
+      const betaUid = localStorage.getItem('beta_uid') || 'beta-user';
+      setIsBeta(true);
+      setUser({ uid: betaUid } as unknown as User);
+      setProfile({
+        uid: betaUid,
+        role: 'user',
+        phone: null,
+        email: null,
+        points: 99999,
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Normal Firebase auth
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
@@ -76,7 +92,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = async () => {
-    await signOut(auth);
+    if (isBeta) {
+      localStorage.removeItem('beta_token');
+      localStorage.removeItem('beta_uid');
+      setIsBeta(false);
+      setUser(null);
+      setProfile(null);
+      window.location.href = '/login';
+    } else {
+      await signOut(auth);
+    }
   };
 
   const refreshProfile = async () => {
@@ -86,7 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile }}>
+    <AuthContext.Provider value={{ user, profile, loading, logout, refreshProfile, isBeta }}>
       {children}
     </AuthContext.Provider>
   );
