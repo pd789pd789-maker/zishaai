@@ -9,7 +9,8 @@
       "Bash(git add *)",
       "Bash(git commit -m 'fix: resolve fileURLToPath error in production CJS build *)",
       "Bash(git commit -m 'feat: add beta access code \\(888888\\) login bypass *)",
-      "Bash(git push *)"
+      "Bash(git push *)",
+      "Bash(git commit *)"
     ]
   }
 }
