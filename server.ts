@@ -1,7 +1,6 @@
 import express from "express";
 import { createServer as createViteServer } from "vite";
 import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 import fs from "fs";
 import admin from "firebase-admin";
@@ -16,8 +15,13 @@ process.on('uncaughtException', (err) => {
   console.error('Uncaught Exception thrown:', err);
 });
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// CJS production build: __dirname and __filename are provided by Node.js at runtime
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _dirname = __dirname;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _filename = __filename;
+void _dirname;
+void _filename;
 
 // Initialize Firebase Admin globally so it doesn't crash on startup if missing.
 // This is typically provided via service account json

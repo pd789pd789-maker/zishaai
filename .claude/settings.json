@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pkill -f \"node dist/server.cjs\")",
+      "Bash(pkill -f \"node.*server\")",
+      "Bash(pkill -f \"node\")",
+      "Bash(node dist/server.cjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000/api/proxy-image)",
+      "Bash(git add *)",
+      "Bash(git commit -m 'fix: resolve fileURLToPath error in production CJS build *)"
+    ]
+  }
+}
