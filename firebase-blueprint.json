@@ -1,0 +1,62 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile containing authentication and points data.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "User ID matching auth UID" },
+        "role": { "type": "string", "enum": ["user", "admin"], "description": "User role, defaults to 'user'" },
+        "phone": { "type": ["string", "null"], "description": "User's phone number" },
+        "email": { "type": ["string", "null"], "description": "User's email" },
+        "points": { "type": "number", "description": "User's available points balance" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role", "points", "createdAt", "updatedAt"]
+    },
+    "Transaction": {
+      "title": "Transaction",
+      "description": "Log of point additions and deductions.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The UID of the user this transaction belongs to" },
+        "amount": { "type": "number", "description": "The monetary amount (e.g. CNY), 0 if consuming points" },
+        "points": { "type": "number", "description": "Points value, positive for recharge, negative for consume" },
+        "type": { "type": "string", "enum": ["recharge", "consume", "admin_adjust"], "description": "Transaction type" },
+        "status": { "type": "string", "enum": ["pending", "completed", "failed"], "description": "Payment/Tx status" },
+        "description": { "type": "string", "description": "Human readable description" },
+        "metadata": { "type": "object", "description": "Additional info such as Alipay orderId" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "amount", "points", "type", "status", "description", "createdAt"]
+    },
+    "SampleImage": {
+      "title": "Sample Image",
+      "description": "Images uploaded by users or samples uploaded by admins",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "type": { "type": "string", "enum": ["sample", "user_upload"] },
+        "category": { "type": "string", "description": "Optional category" },
+        "createdBy": { "type": "string", "description": "User ID of uploader" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["url", "type", "createdBy", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "A collection of all registered users."
+    },
+    "/transactions/{transactionId}": {
+      "schema": { "$ref": "#/entities/Transaction" },
+      "description": "A collection of all points transactions and payments."
+    },
+    "/samples/{sampleId}": {
+      "schema": { "$ref": "#/entities/SampleImage" },
+      "description": "A collection of all uploaded images and admin samples."
+    }
+  }
+}

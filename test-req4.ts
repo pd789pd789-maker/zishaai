@@ -1,0 +1,28 @@
+import fs from 'fs';
+
+async function test() {
+  const req = {
+    images: ["data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII="]
+  };
+  try {
+    const res = await fetch("https://api.vectorengine.ai/v1beta/models/gemini-3.1-flash-image-preview:generateContent", {
+      method: "POST",
+      headers: { 
+          "x-goog-api-key": process.env.VECTORENGINE_API_KEY || "sk-ye9G96XpJ5V2g1gj5DskvyL1CT6yw4NGjis6nOFVNT2Phc5Q",
+          "Content-Type": "application/json" 
+      },
+      body: JSON.stringify({
+        contents: [{ role: "user", parts: [{ text: "apple" }] }],
+        generationConfig: {
+            responseModalities: ["IMAGE"],
+            imageConfig: { imageSize: "2K" }
+        }
+      })
+    });
+    const imgData = await res.json();
+    console.log("IMG DATA:", JSON.stringify(imgData, null, 2));
+  } catch(e) {
+    console.error(e);
+  }
+}
+test();
