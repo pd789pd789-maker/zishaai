@@ -62,8 +62,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     // Check beta token first
     const betaToken = localStorage.getItem('beta_token');
+    const betaUid = localStorage.getItem('beta_uid') || 'beta-user';
+    const betaIdToken = localStorage.getItem('beta_id_token') || 'beta-' + betaUid;
     if (betaToken === 'active') {
-      const betaUid = localStorage.getItem('beta_uid') || 'beta-user';
       setIsBeta(true);
       setUser({ uid: betaUid } as unknown as User);
       setProfile({

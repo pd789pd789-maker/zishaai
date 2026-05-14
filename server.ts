@@ -67,6 +67,13 @@ async function startServer() {
       return res.status(401).json({ error: 'Unauthorized' });
     }
     const idToken = authHeader.split('Bearer ')[1];
+
+    // Beta token bypass
+    if (idToken && idToken.startsWith('beta-')) {
+      (req as any).user = { uid: idToken.replace('beta-', '') };
+      return next();
+    }
+
     try {
       if (!firebaseAdminApp) throw new Error("Firebase Admin not configured");
       const decodedToken = await firebaseAdminApp.auth().verifyIdToken(idToken);

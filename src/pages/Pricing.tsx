@@ -17,7 +17,7 @@ export default function Pricing() {
     
     setLoadingPlan(planName);
     try {
-      const idToken = await auth.currentUser?.getIdToken();
+      const idToken = auth.currentUser?.getIdToken() || localStorage.getItem('beta_id_token');
       if (!idToken) throw new Error("Authentication error");
 
       const response = await fetch('/api/payment/create', {

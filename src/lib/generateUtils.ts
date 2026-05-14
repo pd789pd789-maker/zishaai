@@ -13,7 +13,7 @@ export function getCreditCost(resolution: string): number {
 export async function generateImageWithPolling(body: any, signal?: AbortSignal): Promise<string> {
   const requestBody = { ...body, clientOrigin: window.location.origin };
   
-  const idToken = await auth.currentUser?.getIdToken();
+  const idToken = auth.currentUser?.getIdToken() || localStorage.getItem('beta_id_token');
   if (!idToken) throw new Error("请先登录");
 
   const submitRes = await fetch('/api/generate-image/submit', {

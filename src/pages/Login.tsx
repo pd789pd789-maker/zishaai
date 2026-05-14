@@ -15,8 +15,9 @@ export default function Login() {
       return;
     }
     setLoading(true);
-    localStorage.setItem("beta_token", "active");
-    localStorage.setItem("beta_uid", "beta-" + Date.now());
+    const betaUid = "beta-" + Date.now();
+    localStorage.setItem("beta_uid", betaUid);
+    localStorage.setItem("beta_id_token", "beta-" + betaUid);
     toast.success("正在进入工作台...");
     window.location.href = "/app";
   };
